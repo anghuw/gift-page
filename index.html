@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+<title>🎁 口令解锁</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* 背景粒子 */
+.particles {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
+.particle {
+  position: absolute;
+  width: 6px; height: 6px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  animation: float linear infinite;
+}
+@keyframes float {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+
+/* 弹窗卡片 */
+.modal {
+  position: relative; z-index: 10;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 40px 32px;
+  width: 90%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.modal .icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounce 2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.modal h2 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.modal .hint {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 24px;
+}
+
+.modal input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.modal input:focus {
+  border-color: #667eea;
+}
+.modal input.error {
+  border-color: #ff4757;
+  animation: shake 0.5s;
+}
+.modal input.success {
+  border-color: #2ed573;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.modal .error-msg {
+  color: #ff4757;
+  font-size: 13px;
+  margin-top: 8px;
+  min-height: 20px;
+}
+
+.modal button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  margin-top: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.modal button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+.modal button:active {
+  transform: translateY(0);
+}
+
+/* 内容区域 */
+.reveal {
+  display: none;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 100;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.6s;
+}
+.reveal.show { display: flex; }
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.reveal .emoji-big {
+  font-size: 80px;
+  animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-bottom: 20px;
+}
+.reveal h1 {
+  color: white;
+  font-size: 28px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.reveal p {
+  color: rgba(255,255,255,0.85);
+  font-size: 16px;
+  max-width: 300px;
+  line-height: 1.6;
+  text-align: center;
+}
+.reveal .reset-btn {
+  margin-top: 32px;
+  padding: 12px 32px;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-radius: 30px;
+  background: transparent;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.reveal .reset-btn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: white;
+}
+
+/* 音乐按钮 */
+.music-btn {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 200;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  display: none;
+  transition: transform 0.3s;
+}
+.music-btn:hover { transform: scale(1.1); }
+.music-btn.show { display: block; animation: popIn 0.5s; }
+</style>
+</head>
+<body>
+
+<!-- 背景粒子 -->
+<div class="particles" id="particles"></div>
+
+<!-- 口令弹窗 -->
+<div class="modal" id="modal">
+  <div class="icon">🔒</div>
+  <h2 id="title">这是一个秘密</h2>
+  <p class="hint" id="hint">请输入口令解锁惊喜</p>
+  <input type="text" id="pwdInput" placeholder="输入口令..." autocomplete="off">
+  <div class="error-msg" id="errorMsg"></div>
+  <button id="submitBtn" onclick="checkPassword()">🔓 解锁</button>
+</div>
+
+<!-- 解锁后内容 -->
+<div class="reveal" id="reveal">
+  <div class="emoji-big" id="revealEmoji">🎉</div>
+  <h1 id="revealTitle">恭喜解锁！</h1>
+  <p id="revealText">这里是你的秘密内容~</p>
+  <button class="reset-btn" onclick="resetPage()">🔒 再锁一次</button>
+</div>
+
+<!-- 音乐按钮 -->
+<button class="music-btn" id="musicBtn" onclick="toggleMusic()">🎵</button>
+<audio id="bgMusic" loop preload="auto">
+  <!-- 替换成你喜欢的音乐 -->
+  <source src="https://sf6-cdn-tos.douyinstatic.com/obj/ies-music/7180316711491619596.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ============ 配置区 - 改这里就行 ============
+const CONFIG = {
+  password: '520',           // 口令
+  title: '宝贝~今天是我们认识的第1天哦~',  // 弹窗标题
+  hint: '请输入口令 520',     // 提示文字
+  btnText: '点我解锁',       // 按钮文字
+  revealEmoji: '❤️',         // 解锁后表情
+  revealTitle: '我也喜欢你~', // 解锁后标题
+  revealText: '周杰伦的晴天，孙燕姿的雨天，\n陈奕迅的阴天，\n都不如有你在我身边的每一天 🌈',  // 解锁后内容
+  bgGradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',  // 解锁后背景
+  musicAutoPlay: false,      // 是否自动播放音乐
+};
+
+// ============ 初始化 ============
+document.getElementById('title').textContent = CONFIG.title;
+document.getElementById('hint').textContent = CONFIG.hint;
+document.getElementById('submitBtn').textContent = CONFIG.btnText;
+document.getElementById('revealEmoji').textContent = CONFIG.revealEmoji;
+document.getElementById('revealTitle').textContent = CONFIG.revealTitle;
+document.getElementById('revealText').textContent = CONFIG.revealText;
+document.getElementById('reveal').style.background = CONFIG.bgGradient;
+
+// 生成粒子
+(function createParticles() {
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.width = p.style.height = (Math.random() * 4 + 3) + 'px';
+    p.style.animationDuration = (Math.random() * 6 + 4) + 's';
+    p.style.animationDelay = (Math.random() * 6) + 's';
+    c.appendChild(p);
+  }
+})();
+
+// 回车提交
+document.getElementById('pwdInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') checkPassword();
+});
+
+// ============ 核心逻辑 ============
+function checkPassword() {
+  const input = document.getElementById('pwdInput');
+  const errorMsg = document.getElementById('errorMsg');
+  const val = input.value.trim();
+
+  if (!val) {
+    input.classList.add('error');
+    errorMsg.textContent = '请输入口令~';
+    setTimeout(() => { input.classList.remove('error'); errorMsg.textContent = ''; }, 1500);
+    return;
+  }
+
+  if (val === CONFIG.password) {
+    // ✅ 正确
+    input.classList.add('success');
+    errorMsg.textContent = '';
+    errorMsg.style.color = '#2ed573';
+    errorMsg.textContent = '✅ 口令正确！';
+
+    setTimeout(() => {
+      document.getElementById('modal').style.animation = 'none';
+      document.getElementById('modal').style.transform = 'scale(0.5)';
+      document.getElementById('modal').style.opacity = '0';
+      document.getElementById('modal').style.transition = 'all 0.4s';
+
+      setTimeout(() => {
+        document.getElementById('modal').style.display = 'none';
+        document.getElementById('reveal').classList.add('show');
+        document.getElementById('musicBtn').classList.add('show');
+        if (CONFIG.musicAutoPlay) {
+          document.getElementById('bgMusic').play().catch(()=>{});
+        }
+      }, 400);
+    }, 600);
+  } else {
+    // ❌ 错误
+    input.classList.add('error');
+    errorMsg.style.color = '#ff4757';
+    errorMsg.textContent = '❌ 口令不对哦，再试试~';
+    setTimeout(() => {
+      input.classList.remove('error');
+      errorMsg.textContent = '';
+      input.value = '';
+      input.focus();
+    }, 1500);
+  }
+}
+
+function toggleMusic() {
+  const audio = document.getElementById('bgMusic');
+  const btn = document.getElementById('musicBtn');
+  if (audio.paused) {
+    audio.play();
+    btn.textContent = '🎵';
+  } else {
+    audio.pause();
+    btn.textContent = '🔇';
+  }
+}
+
+function resetPage() {
+  document.getElementById('reveal').classList.remove('show');
+  document.getElementById('modal').style.display = '';
+  document.getElementById('modal').style.animation = 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+  document.getElementById('modal').style.transform = '';
+  document.getElementById('modal').style.opacity = '';
+  document.getElementById('modal').style.transition = '';
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('pwdInput').classList.remove('success', 'error');
+  document.getElementById('errorMsg').textContent = '';
+  document.getElementById('musicBtn').classList.remove('show');
+  document.getElementById('bgMusic').pause();
+  document.getElementById('bgMusic').currentTime = 0;
+}
+</script>
+</body>
+</html>
